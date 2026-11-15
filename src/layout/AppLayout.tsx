@@ -20,9 +20,10 @@ import type { FooterMode } from "@/hooks/useLayoutVM";
 
 interface AppLayoutProps {
     footerMode?: FooterMode;
+    toggleMode: () => void;
 }
 
-function AppLayoutInner() {
+function AppLayoutInner({ toggleMode }: { toggleMode: () => void }) {
     const theme = useTheme();
     const mainRef = useRef<HTMLDivElement | null>(null);
 
@@ -75,7 +76,7 @@ function AppLayoutInner() {
                     flexShrink: 0,
                 }}
             >
-                <AppHeader />
+                <AppHeader toggleMode={toggleMode} />
             </Box>
 
             {/* Main application outlet */}
@@ -144,13 +145,14 @@ function AppLayoutInner() {
 
 export default function AppLayout({
                                       footerMode = "sticky",
+                                      toggleMode,
                                   }: AppLayoutProps) {
     return (
         <LayoutVMProvider
             initialTitle="Candidate Assessment"
             initialFooterMode={footerMode}
         >
-            <AppLayoutInner />
+            <AppLayoutInner toggleMode={toggleMode} />
         </LayoutVMProvider>
     );
 }

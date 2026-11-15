@@ -1,35 +1,37 @@
-
+// LoginPage.tsx
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
     Box,
     Chip,
-    IconButton,
+    Paper,
     Stack,
-    Tooltip,
     Typography,
+    useTheme,
 } from "@mui/material";
-
-import type { PaletteMode } from "@mui/material";
 
 import {
     AssessmentRounded,
     AutoGraphRounded,
-    DarkModeRounded,
     GppGoodRounded,
-    LightModeRounded,
     SecurityRounded,
     VerifiedUserRounded,
 } from "@mui/icons-material";
 
 import LoginForm from "@damap/components/auth/LoginForm";
+import TwoFactorAuthPanel from "@damap/components/auth/TwoFactorAuthPanel";
+import AuthServices from "@damap/api/authServices";
+import type { DAMapUserBase } from "@damap/types/authTypes";
 
 // ============================================================
-// Types
+// Configuration
 // ============================================================
 
-export interface LoginPageProps {
-    mode: PaletteMode;
-    toggleMode: () => void;
-}
+const TWO_FACTOR_CONFIG = {
+    applicationCode: "CANDIDATE_APP",
+    teamCode: "DEFAULT_TEAM",
+    formCode: "LOGIN_2FA",
+};
 
 // ============================================================
 // Features
@@ -60,11 +62,21 @@ const features = [
 // Login Page
 // ============================================================
 
-export default function LoginPage({
-                                      mode,
-                                      toggleMode,
-                                  }: LoginPageProps) {
-    const dark = mode === "dark";
+export default function LoginPage() {
+    const theme = useTheme();
+    const dark = theme.palette.mode === "dark";
+    const navigate = useNavigate();
+
+    const [pendingUser, setPendingUser] = useState<DAMapUserBase | null>(null);
+
+    const handleCancel2FA = () => {
+        AuthServices.performLogout({ silent: true });
+        setPendingUser(null);
+    };
+
+    const handle2FAVerified = () => {
+        navigate("/dashboard", { replace: true });
+    };
 
     return (
         <Box
@@ -81,10 +93,7 @@ export default function LoginPage({
                 bgcolor: "background.default",
             }}
         >
-            {/* ============================================
-                Left: Branding and Introduction
-            ============================================ */}
-
+            {/* Left: Branding and Introduction */}
             <Box
                 sx={{
                     position: "relative",
@@ -92,11 +101,7 @@ export default function LoginPage({
                     display: "flex",
                     flexDirection: "column",
                     justifyContent: "space-between",
-                    p: {
-                        xs: 3,
-                        sm: 5,
-                        lg: 8,
-                    },
+                    p: { xs: 3, sm: 5, lg: 8 },
                     color: "#FFFFFF",
                     background:
                         "radial-gradient(ellipse at 85% 80%, rgba(20,160,150,0.25), transparent 50%), linear-gradient(145deg, #09182D 0%, #163650 100%)",
@@ -115,8 +120,7 @@ export default function LoginPage({
                             linear-gradient(90deg, rgba(130,200,210,0.15) 1px, transparent 1px)
                         `,
                         backgroundSize: "44px 44px",
-                        maskImage:
-                            "linear-gradient(120deg, transparent, black)",
+                        maskImage: "linear-gradient(120deg, transparent, black)",
                     }}
                 />
 
@@ -124,11 +128,7 @@ export default function LoginPage({
                 <Stack
                     direction="row"
                     spacing={1.5}
-                    sx={{
-                        alignItems: "center",
-                        position: "relative",
-                        zIndex: 1,
-                    }}
+                    sx={{ alignItems: "center", position: "relative", zIndex: 1 }}
                 >
                     <Box
                         sx={{
@@ -139,8 +139,7 @@ export default function LoginPage({
                             placeItems: "center",
                             color: "#6EE5D4",
                             bgcolor: "rgba(100,220,200,0.12)",
-                            border:
-                                "1px solid rgba(100,220,200,0.22)",
+                            border: "1px solid rgba(100,220,200,0.22)",
                         }}
                     >
                         <AssessmentRounded sx={{ fontSize: 29 }} />
@@ -157,12 +156,7 @@ export default function LoginPage({
                             Candidate Assessment
                         </Typography>
 
-                        <Typography
-                            sx={{
-                                fontSize: "0.8rem",
-                                color: "#AAC0D2",
-                            }}
-                        >
+                        <Typography sx={{ fontSize: "0.8rem", color: "#AAC0D2" }}>
                             Secure Candidate Evaluation Platform
                         </Typography>
                     </Box>
@@ -174,10 +168,7 @@ export default function LoginPage({
                         position: "relative",
                         zIndex: 1,
                         maxWidth: 580,
-                        py: {
-                            xs: 5,
-                            md: 7,
-                        },
+                        py: { xs: 5, md: 7 },
                     }}
                 >
                     <Chip
@@ -186,14 +177,11 @@ export default function LoginPage({
                         sx={{
                             color: "#74E5D4",
                             bgcolor: "rgba(100,220,200,0.10)",
-                            border:
-                                "1px solid rgba(100,220,200,0.25)",
+                            border: "1px solid rgba(100,220,200,0.25)",
                             fontWeight: 750,
                             letterSpacing: 1,
                             fontSize: "0.7rem",
-                            "& .MuiChip-icon": {
-                                color: "inherit",
-                            },
+                            "& .MuiChip-icon": { color: "inherit" },
                         }}
                     />
 
@@ -202,11 +190,7 @@ export default function LoginPage({
                         sx={{
                             mt: 3,
                             fontWeight: 850,
-                            fontSize: {
-                                xs: "2.4rem",
-                                sm: "3.2rem",
-                                lg: "4.1rem",
-                            },
+                            fontSize: { xs: "2.4rem", sm: "3.2rem", lg: "4.1rem" },
                             lineHeight: 1.13,
                             letterSpacing: "-0.045em",
                         }}
@@ -215,10 +199,7 @@ export default function LoginPage({
                         <br />
                         confidence.
                         <br />
-                        <Box
-                            component="span"
-                            sx={{ color: "#70E0CE" }}
-                        >
+                        <Box component="span" sx={{ color: "#70E0CE" }}>
                             Secure. Fair.
                             <br />
                             Transparent.
@@ -234,30 +215,21 @@ export default function LoginPage({
                             color: "#B7CAD9",
                         }}
                     >
-                        A secure digital platform for candidate
-                        assessments, evaluation workflows, and
-                        transparent decision-making.
+                        A secure digital platform for candidate assessments,
+                        evaluation workflows, and transparent decision-making.
                     </Typography>
 
                     {/* Features */}
                     <Stack
                         spacing={2.75}
-                        sx={{
-                            mt: 5,
-                            display: {
-                                xs: "none",
-                                sm: "flex",
-                            },
-                        }}
+                        sx={{ mt: 5, display: { xs: "none", sm: "flex" } }}
                     >
                         {features.map((feature) => (
                             <Stack
                                 key={feature.title}
                                 direction="row"
                                 spacing={2}
-                                sx={{
-                                    alignItems: "center",
-                                }}
+                                sx={{ alignItems: "center" }}
                             >
                                 <Box
                                     sx={{
@@ -267,10 +239,8 @@ export default function LoginPage({
                                         display: "grid",
                                         placeItems: "center",
                                         borderRadius: 2.5,
-                                        bgcolor:
-                                            "rgba(255,255,255,0.07)",
-                                        border:
-                                            "1px solid rgba(255,255,255,0.10)",
+                                        bgcolor: "rgba(255,255,255,0.07)",
+                                        border: "1px solid rgba(255,255,255,0.10)",
                                         color: "#6EE5D4",
                                     }}
                                 >
@@ -278,12 +248,7 @@ export default function LoginPage({
                                 </Box>
 
                                 <Box>
-                                    <Typography
-                                        sx={{
-                                            fontWeight: 700,
-                                            fontSize: "0.95rem",
-                                        }}
-                                    >
+                                    <Typography sx={{ fontWeight: 700, fontSize: "0.95rem" }}>
                                         {feature.title}
                                     </Typography>
 
@@ -309,47 +274,29 @@ export default function LoginPage({
                         zIndex: 1,
                         color: "#91AABD",
                         fontSize: "0.77rem",
-                        display: {
-                            xs: "none",
-                            md: "block",
-                        },
+                        display: { xs: "none", md: "block" },
                     }}
                 >
-                    © {new Date().getFullYear()} Candidate
-                    Assessment Platform
+                    © {new Date().getFullYear()} Candidate Assessment Platform
                 </Typography>
             </Box>
 
-            {/* ============================================
-                Right: Authentication
-            ============================================ */}
-
+            {/* Right: Authentication */}
             <Box
                 sx={{
                     display: "flex",
                     flexDirection: "column",
                     minWidth: 0,
-                    minHeight: {
-                        xs: 540,
-                        md: "100%",
-                    },
-                    px: {
-                        xs: 2,
-                        sm: 4,
-                        lg: 7,
-                    },
+                    minHeight: { xs: 540, md: "100%" },
+                    px: { xs: 2, sm: 4, lg: 7 },
                     py: 3,
                     bgcolor: "background.default",
                 }}
             >
-                {/* Theme toggle */}
                 <Stack
                     direction="row"
                     spacing={1.5}
-                    sx={{
-                        alignItems: "center",
-                        justifyContent: "flex-end",
-                    }}
+                    sx={{ alignItems: "center", justifyContent: "flex-end" }}
                 >
                     <Chip
                         label="AUTHORIZED ACCESS"
@@ -362,32 +309,9 @@ export default function LoginPage({
                             fontSize: "0.68rem",
                         }}
                     />
-
-                    <Tooltip
-                        title={
-                            dark
-                                ? "Switch to light mode"
-                                : "Switch to dark mode"
-                        }
-                    >
-                        <IconButton
-                            onClick={toggleMode}
-                            aria-label="Toggle color mode"
-                            sx={{
-                                border: 1,
-                                borderColor: "divider",
-                            }}
-                        >
-                            {dark ? (
-                                <LightModeRounded />
-                            ) : (
-                                <DarkModeRounded />
-                            )}
-                        </IconButton>
-                    </Tooltip>
                 </Stack>
 
-                {/* Login form */}
+                {/* Login form / 2FA Panel */}
                 <Box
                     sx={{
                         width: "100%",
@@ -401,10 +325,7 @@ export default function LoginPage({
                             maxWidth: "none",
                             boxSizing: "border-box",
                             m: 0,
-                            p: {
-                                xs: 2.5,
-                                sm: 4,
-                            },
+                            p: { xs: 2.5, sm: 4 },
                             bgcolor: "background.paper",
                             color: "text.primary",
                             border: 1,
@@ -416,11 +337,26 @@ export default function LoginPage({
                         },
                     }}
                 >
-                    <LoginForm
-                        title="Welcome back"
-                        subtitle="Sign in to Candidate Assessment"
-                        defaultPostLoginPath="/dashboard"
-                    />
+                    {!pendingUser ? (
+                        <LoginForm
+                            title="Welcome back"
+                            subtitle="Sign in to Candidate Assessment"
+                            skipRedirect={true}
+                            onLoginSuccess={(user) => setPendingUser(user)}
+                        />
+                    ) : (
+                        <Paper elevation={3}>
+                            <TwoFactorAuthPanel
+                                applicationCode={TWO_FACTOR_CONFIG.applicationCode}
+                                teamCode={TWO_FACTOR_CONFIG.teamCode}
+                                formCode={TWO_FACTOR_CONFIG.formCode}
+                                description={`Enter the six-digit code from your authenticator application to complete sign-in as ${pendingUser.name || pendingUser.username}.`}
+                                onVerified={handle2FAVerified}
+                                onCancel={handleCancel2FA}
+                                cancelLabel="Back to Login"
+                            />
+                        </Paper>
+                    )}
 
                     <Stack
                         direction="row"
@@ -431,17 +367,9 @@ export default function LoginPage({
                             justifyContent: "center",
                         }}
                     >
-                        <SecurityRounded
-                            sx={{
-                                fontSize: 18,
-                                color: "primary.main",
-                            }}
-                        />
+                        <SecurityRounded sx={{ fontSize: 18, color: "primary.main" }} />
 
-                        <Typography
-                            variant="caption"
-                            color="text.secondary"
-                        >
+                        <Typography variant="caption" color="text.secondary">
                             Secure access with two-factor protection
                         </Typography>
                     </Stack>

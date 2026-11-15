@@ -66,7 +66,7 @@ export default function App() {
         <CssBaseline />
 
         <BrowserRouter>
-          <AppRoutes mode={mode} toggleMode={toggleMode} />
+          <AppRoutes toggleMode={toggleMode} />
         </BrowserRouter>
       </ThemeProvider>
   );

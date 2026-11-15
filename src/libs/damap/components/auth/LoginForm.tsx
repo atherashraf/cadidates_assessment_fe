@@ -1,5 +1,5 @@
-//src/libs/damap/components/auth/LoginForm.tsx
-import React, { useRef, useState} from "react";
+// src/libs/damap/components/auth/LoginForm.tsx
+import React, { useRef, useState } from "react";
 import {
     Box,
     TextField,
@@ -17,7 +17,7 @@ import { Visibility, VisibilityOff } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 
 import DASnackbar, {
-   type DASnackbarHandle,
+    type DASnackbarHandle,
 } from "@damap/components/base/DASnackbar";
 import AuthServices from "@damap/api/authServices";
 import type { DAMapUserBase } from "@damap/types/authTypes";
@@ -26,6 +26,7 @@ export type LoginFormProps<TUser extends DAMapUserBase = DAMapUserBase> = {
     getPostLoginPath?: (user: TUser) => string;
     defaultPostLoginPath?: string;
     onLoginSuccess?: (user: TUser) => void;
+    skipRedirect?: boolean;
     forgotPasswordPath?: string;
     title?: string;
     subtitle?: string;
@@ -35,6 +36,7 @@ const LoginForm = <TUser extends DAMapUserBase = DAMapUserBase>({
                                                                     getPostLoginPath,
                                                                     defaultPostLoginPath = "/",
                                                                     onLoginSuccess,
+                                                                    skipRedirect = false,
                                                                     forgotPasswordPath = "#",
                                                                     title = "Welcome!",
                                                                     subtitle = "Please enter your details",
@@ -54,21 +56,25 @@ const LoginForm = <TUser extends DAMapUserBase = DAMapUserBase>({
 
         try {
             const user = await AuthServices.performLogin<TUser>(
-                username, password
+                username,
+                password
             );
 
             if (!user) {
                 snackbarRef.current?.show(
-                    AuthServices.getLastErrorMessage() || "Invalid username or password",
+                    AuthServices.getLastErrorMessage() ||
+                    "Invalid username or password",
                     "error"
                 );
                 return;
             }
 
-            snackbarRef.current?.show("Login successful", "success");
-            window.dispatchEvent(new Event("auth-login"));
-
             onLoginSuccess?.(user);
+
+            if (skipRedirect) {
+                return;
+            }
+
             const target = getPostLoginPath
                 ? getPostLoginPath(user)
                 : defaultPostLoginPath;
@@ -77,6 +83,42 @@ const LoginForm = <TUser extends DAMapUserBase = DAMapUserBase>({
         } finally {
             setLoading(false);
         }
+    };
+
+    const inputSx = (theme: any) => {
+        const isDark = theme.palette.mode === "dark";
+        const fieldBg = isDark ? "#0d1117" : "#ffffff";
+
+        return {
+            mb: 2,
+            "& .MuiOutlinedInput-root": {
+                borderRadius: 2,
+                backgroundColor: fieldBg,
+                color: "text.primary",
+                "& fieldset": {
+                    borderColor: "divider",
+                },
+                "&:hover fieldset": {
+                    borderColor: "text.secondary",
+                },
+                "&.Mui-focused fieldset": {
+                    borderColor: "primary.main",
+                    borderWidth: "1.5px",
+                },
+            },
+            "& input": {
+                py: 1.35,
+                fontSize: "0.98rem",
+                color: "text.primary",
+                caretColor: theme.palette.text.primary,
+                // Prevents browser autofill from forcing a white/yellow background in dark mode
+                "&:-webkit-autofill": {
+                    WebkitBoxShadow: `0 0 0 100px ${fieldBg} inset`,
+                    WebkitTextFillColor: theme.palette.text.primary,
+                    caretColor: theme.palette.text.primary,
+                },
+            },
+        };
     };
 
     return (
@@ -89,20 +131,19 @@ const LoginForm = <TUser extends DAMapUserBase = DAMapUserBase>({
                 px: 5,
                 width: "100%",
                 maxWidth: 520,
-                borderRadius: 5,
-                backgroundColor: "rgba(245,245,245,0.96)",
-                boxShadow: "0 10px 30px rgba(0,0,0,0.14)",
+                borderRadius: 3,
+                bgcolor: "background.paper",
+                color: "text.primary",
             }}
         >
             <Typography
                 align="center"
+                variant="h4"
                 sx={{
-                    fontFamily: "Georgia, serif",
-                    fontWeight: 700,
-                    fontSize: "2.3rem",
-                    color: "#355a92",
+                    fontWeight: 800,
+                    color: "primary.main",
                     mb: 0.5,
-                    lineHeight: 1.2,
+                    letterSpacing: "-0.02em",
                 }}
             >
                 {title}
@@ -110,10 +151,9 @@ const LoginForm = <TUser extends DAMapUserBase = DAMapUserBase>({
 
             <Typography
                 align="center"
+                variant="body2"
                 sx={{
-                    fontFamily: "Georgia, serif",
-                    fontSize: "1rem",
-                    color: "#555",
+                    color: "text.secondary",
                     mb: 3,
                 }}
             >
@@ -122,12 +162,11 @@ const LoginForm = <TUser extends DAMapUserBase = DAMapUserBase>({
 
             <Box component="form" onSubmit={handleSubmit}>
                 <Typography
+                    variant="subtitle2"
                     sx={{
-                        fontFamily: "Georgia, serif",
                         fontWeight: 700,
-                        fontSize: "1rem",
-                        mb: 0.8,
-                        color: "#222",
+                        mb: 0.75,
+                        color: "text.primary",
                     }}
                 >
                     Username
@@ -137,41 +176,19 @@ const LoginForm = <TUser extends DAMapUserBase = DAMapUserBase>({
                     placeholder="Enter username"
                     variant="outlined"
                     fullWidth
+                    autoComplete="username"
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
                     required
-                    sx={{
-                        mb: 2,
-                        "& .MuiOutlinedInput-root": {
-                            borderRadius: 2.5,
-                            backgroundColor: "#fbfbfb",
-                            fontFamily: "Georgia, serif",
-                            "& fieldset": {
-                                borderColor: "#cfd6dd",
-                            },
-                            "&:hover fieldset": {
-                                borderColor: "#b3bfcb",
-                            },
-                            "&.Mui-focused fieldset": {
-                                borderColor: "#355a92",
-                                borderWidth: "1.5px",
-                            },
-                        },
-                        "& input": {
-                            py: 1.35,
-                            fontSize: "1rem",
-                            fontFamily: "Georgia, serif",
-                        },
-                    }}
+                    sx={inputSx}
                 />
 
                 <Typography
+                    variant="subtitle2"
                     sx={{
-                        fontFamily: "Georgia, serif",
                         fontWeight: 700,
-                        fontSize: "1rem",
-                        mb: 0.8,
-                        color: "#222",
+                        mb: 0.75,
+                        color: "text.primary",
                     }}
                 >
                     Password
@@ -179,34 +196,14 @@ const LoginForm = <TUser extends DAMapUserBase = DAMapUserBase>({
 
                 <TextField
                     type={showPassword ? "text" : "password"}
+                    placeholder="Enter password"
                     variant="outlined"
                     fullWidth
+                    autoComplete="current-password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
-                    sx={{
-                        mb: 2,
-                        "& .MuiOutlinedInput-root": {
-                            borderRadius: 2.5,
-                            backgroundColor: "#fbfbfb",
-                            fontFamily: "Georgia, serif",
-                            "& fieldset": {
-                                borderColor: "#cfd6dd",
-                            },
-                            "&:hover fieldset": {
-                                borderColor: "#b3bfcb",
-                            },
-                            "&.Mui-focused fieldset": {
-                                borderColor: "#355a92",
-                                borderWidth: "1.5px",
-                            },
-                        },
-                        "& input": {
-                            py: 1.35,
-                            fontSize: "1rem",
-                            fontFamily: "Georgia, serif",
-                        },
-                    }}
+                    sx={inputSx}
                     slotProps={{
                         input: {
                             endAdornment: (
@@ -219,13 +216,15 @@ const LoginForm = <TUser extends DAMapUserBase = DAMapUserBase>({
                                                 : "Show password"
                                         }
                                         onClick={() =>
-                                            setShowPassword((previous) => !previous)
+                                            setShowPassword(
+                                                (previous) => !previous
+                                            )
                                         }
                                         onMouseDown={(event) =>
                                             event.preventDefault()
                                         }
                                         edge="end"
-                                        sx={{ color: "#5f6f82" }}
+                                        sx={{ color: "text.secondary" }}
                                     >
                                         {showPassword ? (
                                             <VisibilityOff />
@@ -262,21 +261,15 @@ const LoginForm = <TUser extends DAMapUserBase = DAMapUserBase>({
                                 onChange={(e) =>
                                     setRememberMe(e.target.checked)
                                 }
-                                sx={{
-                                    color: "#355a92",
-                                    p: 0.5,
-                                    "&.Mui-checked": {
-                                        color: "#355a92",
-                                    },
-                                }}
+                                color="primary"
+                                sx={{ p: 0.5 }}
                             />
                         }
                         label={
                             <Typography
+                                variant="body2"
                                 sx={{
-                                    fontFamily: "Georgia, serif",
-                                    fontSize: "0.98rem",
-                                    color: "#222",
+                                    color: "text.primary",
                                     whiteSpace: "nowrap",
                                 }}
                             >
@@ -288,11 +281,10 @@ const LoginForm = <TUser extends DAMapUserBase = DAMapUserBase>({
                     <Link
                         href={forgotPasswordPath}
                         underline="hover"
+                        variant="body2"
                         sx={{
-                            fontFamily: "Georgia, serif",
-                            fontSize: "0.98rem",
                             fontWeight: 700,
-                            color: "#355a92",
+                            color: "primary.main",
                             whiteSpace: "nowrap",
                         }}
                     >
@@ -303,24 +295,17 @@ const LoginForm = <TUser extends DAMapUserBase = DAMapUserBase>({
                 <Button
                     type="submit"
                     variant="contained"
+                    color="primary"
                     fullWidth
                     disabled={loading}
                     sx={{
                         mt: 0.5,
                         py: 1.25,
-                        borderRadius: 2.5,
-                        background:
-                            "linear-gradient(180deg, #6f8fc0 0%, #5f81b5 100%)",
+                        borderRadius: 2,
                         textTransform: "none",
-                        fontFamily: "Georgia, serif",
                         fontWeight: 700,
-                        fontSize: "1.15rem",
+                        fontSize: "1rem",
                         boxShadow: "none",
-                        "&:hover": {
-                            background:
-                                "linear-gradient(180deg, #6787b7 0%, #5377aa 100%)",
-                            boxShadow: "none",
-                        },
                     }}
                 >
                     {loading ? (
