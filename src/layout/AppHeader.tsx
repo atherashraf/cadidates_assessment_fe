@@ -1,266 +1,94 @@
-import {
-    AppBar,
-    Avatar,
-    Box,
-    IconButton,
-    Divider,
-    ListItemIcon,
-    Menu,
-    MenuItem,
-    Toolbar,
-    Tooltip,
-    Typography,
-} from "@mui/material";
-import HomeIcon from "@mui/icons-material/Home";
-import LoginIcon from "@mui/icons-material/Login";
-import LogoutIcon from "@mui/icons-material/Logout";
-import ArrowBackIcon from "@mui/icons-material/ArrowBack";
-import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import type { MouseEvent } from "react";
+import {
+    AppBar, Avatar, Box, Divider, IconButton, ListItemIcon,
+    Menu, MenuItem, Toolbar, Tooltip, Typography, useTheme,
+} from "@mui/material";
+import {
+    ArrowBackRounded, ArrowForwardRounded, AssessmentRounded,
+    DarkModeRounded, HomeRounded, LightModeRounded,
+    LoginRounded, LogoutRounded,
+} from "@mui/icons-material";
+import { useLocation, useNavigate } from "react-router-dom";
+import AuthServices from "@damap/api/authServices";
+import { useLayoutVM } from "@/hooks/useLayoutVM";
 
-import leftLogo from "../assets/images/punjab wasa.png";
-import rightLogo from "../assets/images/GOP-PNG.png";
+interface AppHeaderProps {
+    toggleMode: () => void;
+}
 
-import AuthServices from "@/api/authServices";
-import { useLayoutVM } from "../hooks/useLayoutVM";
-import { getGisModuleLandingPath, userHasGisLandingRole } from "@/routes/gisLandingRoutes";
-
-export default function AppHeader() {
+export default function AppHeader({ toggleMode }: AppHeaderProps) {
+    const theme = useTheme();
     const navigate = useNavigate();
+    const location = useLocation();
     const { title, headerHeight } = useLayoutVM();
-
-    const [isLoggedIn, setIsLoggedIn] = useState<boolean>(
-        !!AuthServices.getUser()
-    );
-    const [displayName, setDisplayName] = useState<string | null>(
-        AuthServices.getDisplayName()
-    );
+    const [loggedIn, setLoggedIn] = useState(() => Boolean(AuthServices.getAccessToken()));
+    const [displayName, setDisplayName] = useState<string | null>(() => AuthServices.getDisplayName());
+    const [anchor, setAnchor] = useState<HTMLElement | null>(null);
 
     useEffect(() => {
-        const syncAuthState = () => {
-            const user = AuthServices.getUser();
-            setIsLoggedIn(!!user);
+        const sync = () => {
+            setLoggedIn(Boolean(AuthServices.getAccessToken()));
             setDisplayName(AuthServices.getDisplayName());
         };
-
-        syncAuthState();
-
-        window.addEventListener("auth-login", syncAuthState);
-        window.addEventListener("auth-logout", syncAuthState);
-
+        sync();
+        window.addEventListener("auth-login", sync);
+        window.addEventListener("auth-logout", sync);
+        window.addEventListener("storage", sync);
         return () => {
-            window.removeEventListener("auth-login", syncAuthState);
-            window.removeEventListener("auth-logout", syncAuthState);
+            window.removeEventListener("auth-login", sync);
+            window.removeEventListener("auth-logout", sync);
+            window.removeEventListener("storage", sync);
         };
-    }, []);
-
-    const handleHome = () => {
-        const user = AuthServices.getUser();
-        if (!user) {
-            navigate("/login");
-            return;
-        }
-
-        const roles = AuthServices.getUserRoles(user);
-
-        if (roles.includes("app_manager")) {
-            navigate("/login");
-        } else if (userHasGisLandingRole(user)) {
-            navigate(getGisModuleLandingPath(user));
-        } else if (roles.includes("officer")) {
-            navigate("/proposal-marking");
-        } else {
-            navigate("/login");
-        }
-    };
-
-    const handleLogin = () => {
-        navigate("/login");
-    };
+    }, [location.pathname]);
 
     const handleLogout = () => {
+        setAnchor(null);
         AuthServices.performLogout({ silent: true });
-        setIsLoggedIn(false);
+        setLoggedIn(false);
         setDisplayName(null);
         navigate("/login", { replace: true });
     };
-
-    const [accountAnchorEl, setAccountAnchorEl] = useState<null | HTMLElement>(null);
-    const accountMenuOpen = Boolean(accountAnchorEl);
-    const openAccountMenu = (e: React.MouseEvent<HTMLElement>) => setAccountAnchorEl(e.currentTarget);
-    const closeAccountMenu = () => setAccountAnchorEl(null);
-
     const avatarLetter = (displayName || "U").trim().charAt(0).toUpperCase();
 
     return (
-        <AppBar
-            position="static"
-            elevation={0}
-            sx={{
-                height: headerHeight,
-                backgroundColor: "#ffffff",
-                borderBottom: "1px solid #e0e0e0",
-                justifyContent: "center",
-                flexShrink: 0,
-            }}
-        >
-            <Toolbar
-                disableGutters
-                sx={{
-                    minHeight: `${headerHeight}px !important`,
-                    px: 2,
-                    display: "grid",
-                    gridTemplateColumns: "auto auto 1fr auto", // Added column for history
-                    alignItems: "center",
-                    columnGap: 1,
-                }}
-            >
-                <Box
-                    component="img"
-                    src={leftLogo}
-                    alt="Punjab WASA"
-                    sx={{
-                        height: headerHeight,
-                        width: "auto",
-                        objectFit: "contain",
-                        display: "block",
-                    }}
-                />
-
-                {/* History Controls */}
-                <Box sx={{ display: "flex", gap: 0.5 }}>
-                    <Tooltip title="Back">
-                        <IconButton
-                            onClick={() => navigate(-1)}
-                            size="small"
-                            sx={{ color: "#003B6D" }}
-                        >
-                            <ArrowBackIcon fontSize="small" />
-                        </IconButton>
-                    </Tooltip>
-                    <Tooltip title="Forward">
-                        <IconButton
-                            onClick={() => navigate(1)}
-                            size="small"
-                            sx={{ color: "#003B6D" }}
-                        >
-                            <ArrowForwardIcon fontSize="small" />
-                        </IconButton>
-                    </Tooltip>
+        <AppBar position="static" color="inherit" elevation={0}
+                sx={{ height: headerHeight, flexShrink: 0, bgcolor: "background.paper", color: "text.primary", borderBottom: 1, borderColor: "divider", justifyContent: "center" }}>
+            <Toolbar disableGutters sx={{ minHeight: `${headerHeight}px !important`, px: { xs: 1.5, sm: 2.5 }, gap: { xs: 0.5, sm: 1.5 } }}>
+                <Box sx={{ width: 39, height: 39, borderRadius: 2, display: "grid", placeItems: "center", bgcolor: "primary.main", color: "primary.contrastText", flexShrink: 0 }}>
+                    <AssessmentRounded />
                 </Box>
-
-                <Typography
-                    component="h1"
-                    sx={{
-                        textAlign: "center",
-                        fontSize: "1.9rem",
-                        fontWeight: 700,
-                        lineHeight: 1.2,
-                        color: "#003B6D",
-                        fontFamily: '"Roboto Serif", serif',
-                        whiteSpace: "nowrap",
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                    }}
-                >
-                    {title}
-                </Typography>
-
-                <Box
-                    sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 0.5,
-                        justifySelf: "end",
-                    }}
-                >
-                    {isLoggedIn ? (
-                        <>
-                            <Tooltip title="Home Dashboard">
-                                <IconButton
-                                    onClick={handleHome}
-                                    sx={{ color: "#003B6D" }}
-                                    size="large"
-                                >
-                                    <HomeIcon />
-                                </IconButton>
-                            </Tooltip>
-
-                            <Tooltip title={displayName ? `Signed in as ${displayName}` : "Account"}>
-                                <IconButton
-                                    onClick={openAccountMenu}
-                                    sx={{ color: "#003B6D" }}
-                                    size="large"
-                                >
-                                    <LogoutIcon />
-                                </IconButton>
-                            </Tooltip>
-
-                            <Menu
-                                anchorEl={accountAnchorEl}
-                                open={accountMenuOpen}
-                                onClose={closeAccountMenu}
-                                anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
-                                transformOrigin={{ vertical: "top", horizontal: "right" }}
-                                slotProps={{
-                                    paper: {
-                                        sx: {
-                                            minWidth: 150,
-                                            borderRadius: 2,
-                                            "& .MuiMenuItem-root": { py: 0.35, fontSize: 11.5 },
-                                            "& .MuiListItemIcon-root": { minWidth: 26 },
-                                        },
-                                    },
-                                }}
-                            >
-                                <MenuItem disabled>
-                                    <ListItemIcon>
-                                        <Avatar sx={{ width: 16, height: 16, bgcolor: "primary.light", fontSize: 10 }}>
-                                            {avatarLetter}
-                                        </Avatar>
-                                    </ListItemIcon>
-                                    {displayName || "User"}
-                                </MenuItem>
-                                <Divider />
-                                <MenuItem
-                                    onClick={() => {
-                                        closeAccountMenu();
-                                        handleLogout();
-                                    }}
-                                >
-                                    <ListItemIcon>
-                                        <LogoutIcon fontSize="small" />
-                                    </ListItemIcon>
-                                    Logout
-                                </MenuItem>
-                            </Menu>
-                        </>
-                    ) : (
-                        <Tooltip title="Login">
-                            <IconButton
-                                onClick={handleLogin}
-                                sx={{ color: "#003B6D" }}
-                                size="large"
-                            >
-                                <LoginIcon />
+                <Box sx={{ display: { xs: "none", sm: "block" }, minWidth: 0 }}>
+                    <Typography sx={{ fontWeight: 800, fontSize: "0.86rem", lineHeight: 1.2 }}>Candidate Assessment</Typography>
+                    <Typography color="text.secondary" sx={{ fontSize: "0.68rem" }}>Secure Evaluation Platform</Typography>
+                </Box>
+                <Box sx={{ display: "flex", gap: 0.25, ml: { xs: 0, md: 2 } }}>
+                    <Tooltip title="Back"><span><IconButton size="small" aria-label="Back" onClick={() => navigate(-1)}><ArrowBackRounded fontSize="small" /></IconButton></span></Tooltip>
+                    <Tooltip title="Forward"><span><IconButton size="small" aria-label="Forward" onClick={() => navigate(1)}><ArrowForwardRounded fontSize="small" /></IconButton></span></Tooltip>
+                </Box>
+                <Typography component="h1" sx={{ flex: 1, minWidth: 0, textAlign: "center", fontSize: { xs: "0.95rem", sm: "1.15rem", md: "1.35rem" }, fontWeight: 750, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{title}</Typography>
+                <Tooltip title="Toggle light/dark mode">
+                    <IconButton aria-label="Toggle light/dark mode" onClick={toggleMode} color="primary">
+                        {theme.palette.mode === "dark" ? <LightModeRounded /> : <DarkModeRounded />}
+                    </IconButton>
+                </Tooltip>
+                {loggedIn ? (
+                    <>
+                        <Tooltip title="Dashboard"><IconButton aria-label="Dashboard" onClick={() => navigate("/dashboard")}><HomeRounded /></IconButton></Tooltip>
+                        <Tooltip title={displayName || "Account"}>
+                            <IconButton aria-label="Account menu" onClick={(e: MouseEvent<HTMLElement>) => setAnchor(e.currentTarget)}>
+                                <Avatar sx={{ width: 32, height: 32, bgcolor: "primary.main", color: "primary.contrastText", fontSize: 14 }}>{avatarLetter}</Avatar>
                             </IconButton>
                         </Tooltip>
-                    )}
-
-                    <Box
-                        component="img"
-                        src={rightLogo}
-                        alt="Government of Punjab"
-                        sx={{
-                            height: headerHeight,
-                            width: "auto",
-                            objectFit: "contain",
-                            display: "block",
-                            ml: 0.5,
-                        }}
-                    />
-                </Box>
+                        <Menu anchorEl={anchor} open={Boolean(anchor)} onClose={() => setAnchor(null)} anchorOrigin={{ vertical: "bottom", horizontal: "right" }} transformOrigin={{ vertical: "top", horizontal: "right" }}>
+                            <MenuItem disabled>{displayName || "Signed in"}</MenuItem>
+                            <Divider />
+                            <MenuItem onClick={handleLogout}><ListItemIcon><LogoutRounded fontSize="small" /></ListItemIcon>Sign out</MenuItem>
+                        </Menu>
+                    </>
+                ) : (
+                    <Tooltip title="Sign in"><IconButton aria-label="Sign in" onClick={() => navigate("/login")}><LoginRounded /></IconButton></Tooltip>
+                )}
             </Toolbar>
         </AppBar>
     );

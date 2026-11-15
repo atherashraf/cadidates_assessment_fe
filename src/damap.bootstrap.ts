@@ -1,5 +1,5 @@
 
-import { initDamap } from "damap";
+import { initDamap } from "@damap/config";
 
 // ============================================================
 // Default Map Extent (EPSG:3857)

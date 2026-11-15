@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 
 import { useNavigate } from "react-router-dom";
-import {AuthServices} from "@/libs/damap";
+import AuthServices from "@damap/api/authServices.ts";
 
 const Logout = () => {
     const navigate = useNavigate();

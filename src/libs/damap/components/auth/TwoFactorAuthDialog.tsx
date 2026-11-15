@@ -14,7 +14,8 @@ import {
 } from "@mui/material";
 import {SecurityRounded} from "@mui/icons-material";
 import {TwoFactorAuthService} from "@damap/api/twoFactorAuthService";
-import {useAppApi} from "@/api/AppApiContext";
+import {useMapApi} from "@damap/api/MapApiContext.tsx";
+
 
 
 
@@ -43,7 +44,7 @@ export const TwoFactorAuthDialog: React.FC<
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
 
-    const api= useAppApi();
+    const api= useMapApi();
 
     const handleClose = () => {
         if (loading) return;

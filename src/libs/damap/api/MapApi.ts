@@ -27,11 +27,11 @@
  */
 
 import type { RefObject } from "react";
-import type { DASnackbarHandle } from "@damap/components/base/DASnackbar";
-import { AuthServices } from "@damap/damap";
 import * as pako from "pako";
-import { getDamapConfig } from "@damap/config";
-import { toUserFacingApiError } from "@damap/utils/apiErrorMessage";
+import AuthServices from "@damap/api/authServices";
+import type {DASnackbarHandle} from "../components/base/DASnackbar.tsx";
+import {getDamapConfig} from "@damap/config";
+import {toUserFacingApiError} from "@damap/api/apiErrorMessage.ts";
 
 // ============================================================================
 // Types & API Endpoint Constants
@@ -590,7 +590,7 @@ export default class MapApi {
         requires2FA = false,
     ): Promise<void> {
         const ref = this.snackbarRef.current;
-        let rawMessage: string | object = "";
+        let rawMessage: string | object;
 
         try {
             const contentType = response.headers.get("content-type") || "";
